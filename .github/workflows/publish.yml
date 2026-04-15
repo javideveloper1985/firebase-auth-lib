@@ -2,6 +2,9 @@ name: Publish to npm
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 env:
   VERSION_MAJOR: 1
@@ -22,10 +25,26 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Check if version already exists
+        id: version_check
+        run: |
+          VERSION="${{ env.VERSION_MAJOR }}.${{ env.VERSION_MINOR }}.${{ env.VERSION_PATCH }}"
+          if npm view @javideveloper1985/expo-firebase-auth@$VERSION version 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set version
+        if: steps.version_check.outputs.exists == 'false'
         run: npm version ${{ env.VERSION_MAJOR }}.${{ env.VERSION_MINOR }}.${{ env.VERSION_PATCH }} --no-git-tag-version
 
       - name: Publish package
+        if: steps.version_check.outputs.exists == 'false'
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Skip publish
+        if: steps.version_check.outputs.exists == 'true'
+        run: echo "Version ${{ env.VERSION_MAJOR }}.${{ env.VERSION_MINOR }}.${{ env.VERSION_PATCH }} already exists on npm. Update the version variables to publish."
