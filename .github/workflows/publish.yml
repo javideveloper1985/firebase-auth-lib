@@ -36,21 +36,24 @@ jobs:
         run: |
           VERSION="${{ env.VERSION_MAJOR }}.${{ env.VERSION_MINOR }}.${{ env.VERSION_PATCH }}"
           if npm view @javideveloper1985/expo-firebase-auth@$VERSION version 2>/dev/null; then
-            echo "exists=true" >> $GITHUB_OUTPUT
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "Version $VERSION already exists on npm. Run the workflow manually to force publish."
+              exit 1
+            fi
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Set version
-        if: steps.version_check.outputs.exists == 'false'
         run: npm version ${{ env.VERSION_MAJOR }}.${{ env.VERSION_MINOR }}.${{ env.VERSION_PATCH }} --no-git-tag-version
 
       - name: Publish package
-        if: steps.version_check.outputs.exists == 'false'
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Skip publish
         if: steps.version_check.outputs.exists == 'true'
-        run: echo "Version ${{ env.VERSION_MAJOR }}.${{ env.VERSION_MINOR }}.${{ env.VERSION_PATCH }} already exists on npm. Update the version variables to publish."
+        run: echo "Forced manual publish skipped — version ${{ env.VERSION_MAJOR }}.${{ env.VERSION_MINOR }}.${{ env.VERSION_PATCH }} already exists. Update the version variables to publish a new version."
