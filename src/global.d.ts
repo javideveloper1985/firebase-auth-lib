@@ -7,3 +7,5 @@
 declare const process: {
   readonly env: Record<string, string | undefined>
 }
+
+declare const __DEV__: boolean
