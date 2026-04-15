@@ -48,7 +48,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Set version
-        run: npm version ${{ env.VERSION_MAJOR }}.${{ env.VERSION_MINOR }}.${{ env.VERSION_PATCH }} --no-git-tag-version
+        run: npm version ${{ env.VERSION_MAJOR }}.${{ env.VERSION_MINOR }}.${{ env.VERSION_PATCH }} --no-git-tag-version --allow-same-version
 
       - name: Publish package
         if: steps.version_check.outputs.exists != 'true'
