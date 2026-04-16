@@ -44,6 +44,10 @@ export {
   resetFirebaseAuthSingleton,
 } from './config/createFirebaseAuth'
 
+// ─── Assets ───────────────────────────────────────────────────────────────────
+export { default as GoogleIcon } from './assets/GoogleIcon'
+export { default as FacebookIcon } from './assets/FacebookIcon'
+
 // ─── i18n ─────────────────────────────────────────────────────────────────────
 export { defaultTranslations, defaultTranslate } from './i18n/defaultTranslations'
 
