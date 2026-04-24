@@ -233,12 +233,19 @@ Google OAuth requires creating OAuth Client IDs in Google Cloud Console:
    - Your production URL (e.g., `https://myapp.com`)
 
 5. **Authorized redirect URIs:** Add these:
-   - `http://localhost:8081/__/auth/handler` (local development)
+   
+   **⚠️ IMPORTANT:** You need BOTH formats for web OAuth to work:
+   - `http://localhost:8081` (exact base URL - required!)
+   - `http://localhost:8081/__/auth/handler` (Firebase handler path)
    - `https://your-project.firebaseapp.com/__/auth/handler` (Firebase hosting)
    - `https://myapp.com/__/auth/handler` (your production domain)
+   
+   > **Common Error:** If you get `redirect_uri_mismatch`, make sure you added `http://localhost:8081` **exactly as shown** (without the `/__/auth/handler` path).
 
 6. Click **CREATE**
 7. Copy the **Client ID** → Save as `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`
+
+> **⏱️ Important:** After saving changes in Google Cloud Console, **wait 1-2 minutes** for the configuration to propagate before testing.
 
 ```env
 EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=123456789-abc123.apps.googleusercontent.com
@@ -386,7 +393,7 @@ module.exports = ({ config }) => {
 };
 ```
 
-Then rename your `app.json`:
+Then keep your `app.json` for the base configuration:
 
 ```json
 // Keep app.json for the base configuration
@@ -395,6 +402,25 @@ Then rename your `app.json`:
     "name": "My App",
     "slug": "myapp",
     "version": "1.0.0",
+    // ... rest of your config
+  }
+}
+```
+
+#### Option B: Using `app.json` Only (Simple)
+
+If you're NOT using Android Client ID (web-only or Expo Go), simply add the scheme to `app.json`:
+
+```json
+{
+  "expo": {
+    "name": "My App",
+    "slug": "myapp",
+    "scheme": "myapp",
+    // ☝️ IMPORTANT: Must be a STRING, not an array!
+    // ❌ Wrong: "scheme": ["myapp"]
+    // ✅ Correct: "scheme": "myapp"
+    "version": "1.0.0"
     // ... rest of your config
   }
 }
@@ -1009,14 +1035,62 @@ const auth = getAuth(app);
 1. Go to Google Cloud Console → Credentials → Your Web Client ID
 2. Add these to **Authorized redirect URIs**:
    ```
+   http://localhost:8081
    http://localhost:8081/__/auth/handler
    https://your-project.firebaseapp.com/__/auth/handler
    ```
+   
+   **⚠️ Critical:** You need BOTH `http://localhost:8081` (exact base URL) AND the version with `/__/auth/handler` path!
+
 3. Also add to **Authorized JavaScript origins**:
    ```
    http://localhost:8081
    ```
-4. Wait 5 minutes for changes to propagate
+4. Wait 1-2 minutes for changes to propagate, then test again
+
+#### Problem: "Error 400: redirect_uri_mismatch"
+
+**Cause:** The redirect URI being used doesn't match any configured in Google Cloud Console
+
+**Solution:**
+1. Check the error message for the exact `redirect_uri` value
+2. Go to Google Cloud Console and verify you're editing the **correct Client ID** (the one in your `.env`)
+3. Add the **exact** redirect URI from the error to the authorized list
+4. For web development, always include:
+   ```
+   http://localhost:8081
+   ```
+   (without any path)
+5. **Wait 1-2 minutes** after saving - Google Cloud takes time to propagate changes
+6. Restart your Metro bundler:
+   ```bash
+   npm start
+   ```
+
+#### Problem: "Redirect scheme is not configured"
+
+**Cause:** The `scheme` in `app.json` is incorrectly formatted
+
+**Solution:**
+Make sure `scheme` in your `app.json` is a **string**, not an array:
+
+```json
+// ✅ CORRECT
+{
+  "expo": {
+    "scheme": "myapp"
+  }
+}
+
+// ❌ WRONG
+{
+  "expo": {
+    "scheme": ["myapp"]
+  }
+}
+```
+
+If using `app.config.js`, it will handle this automatically.
 
 #### Problem: "auth/invalid-api-key"
 
