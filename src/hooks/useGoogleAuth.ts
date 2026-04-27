@@ -139,7 +139,19 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
   }, [response, loginWithGoogle, showError, translate])
 
   const handleLoginGoogle = async (): Promise<void> => {
+    // DEBUG: Log all variables before validation
+    console.log('🔍 useGoogleAuth.handleLoginGoogle - START');
+    console.log('🔍 webClientId:', webClientId);
+    console.log('🔍 androidClientId:', androidClientId);
+    console.log('🔍 iosClientId:', iosClientId);
+    console.log('🔍 Platform.OS:', Platform.OS);
+    console.log('🔍 isExpoGo:', isExpoGo);
+    console.log('🔍 redirectScheme:', redirectScheme);
+    console.log('🔍 owner:', owner);
+    console.log('🔍 slug:', slug);
+    
     if (!redirectScheme) {
+      console.error('❌ Validation failed: redirectScheme is missing');
       showError(
         translate('auth.googleConfigIncompleteTitle'),
         translate('auth.googleConfigMissingRedirect'),
@@ -148,6 +160,7 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
     }
 
     if (isExpoGo && (!owner || !slug)) {
+      console.error('❌ Validation failed: owner or slug missing in Expo Go');
       showError(
         translate('auth.googleConfigIncompleteTitle'),
         translate('auth.googleConfigMissingOwnerSlug'),
@@ -159,14 +172,29 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
       !webClientId ||
       (Platform.OS === 'android' && !isExpoGo && !androidClientId) ||
       (Platform.OS === 'ios' && !isExpoGo && !iosClientId)
+    
+    console.log('🔍 missingConfig evaluation:', {
+      webClientIdEmpty: !webClientId,
+      androidCheck: Platform.OS === 'android' && !isExpoGo && !androidClientId,
+      iosCheck: Platform.OS === 'ios' && !isExpoGo && !iosClientId,
+      finalResult: missingConfig
+    });
 
     if (missingConfig) {
+      console.error('❌ Validation failed: Client IDs missing', {
+        webClientId: webClientId || '(empty)',
+        androidClientId: androidClientId || '(empty)',
+        iosClientId: iosClientId || '(empty)',
+        platform: Platform.OS
+      });
       showError(
         translate('auth.googleConfigIncompleteTitle'),
         translate('auth.googleConfigReview'),
       )
       return
     }
+    
+    console.log('✅ All validations passed, calling promptAsync...');
 
     try {
       if (isExpoGo && googleRequest && proxyRedirectUri) {
