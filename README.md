@@ -92,12 +92,21 @@ import { firebaseConfig } from './src/auth/firebaseAuth';
 
 export default function App() {
   return (
-    <AuthProvider config={{ firebaseConfig }}>
+    <AuthProvider config={{ 
+      firebaseConfig,
+      googleConfig: {
+        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+        androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+        iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      }
+    }}>
       <YourAppContent />
     </AuthProvider>
   );
 }
 ```
+
+**⚠️ IMPORTANT:** Pass `googleConfig` here to ensure environment variables are compiled correctly in production builds. This is the ONLY place you need to configure Google OAuth credentials.
 
 ### 3. Use Auth in Components
 
@@ -1249,6 +1258,67 @@ await login(email, password);
 - Built-in form validation with react-hook-form
 - Session persistence handled automatically
 - Google OAuth configured once, works everywhere
+
+---
+
+## 🔧 Troubleshooting
+
+### "Web Client ID is required for Google Auth" Error
+
+**Problem:** Google authentication fails with configuration missing error, even though environment variables are set.
+
+**Root Cause:** In production builds (like `expo export --platform web`), Expo only replaces `process.env.EXPO_PUBLIC_*` variables in **your application code**, NOT inside `node_modules`.
+
+**Solution:** Configure Google OAuth in `AuthProvider` (recommended):
+
+```typescript
+// App.tsx or src/auth/AppAuthProvider.tsx
+import { AuthProvider, type AuthProviderConfig } from '@javideveloper1985/expo-firebase-auth'
+
+const authConfig: AuthProviderConfig = {
+  firebaseConfig: {
+    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY!,
+    authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID!,
+    appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID!,
+  },
+  googleConfig: {
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  },
+}
+
+export default function App() {
+  return (
+    <AuthProvider config={authConfig}>
+      <YourApp />
+    </AuthProvider>
+  )
+}
+```
+
+**Why this works:**
+- ✅ Variables in your app code → Replaced by Expo during build
+- ❌ Variables in `node_modules` → NOT replaced by Expo
+- ✅ `AuthProvider` passes config to all hooks internally
+
+**Alternative:** Pass config directly to `useLogin` (not recommended):
+
+```typescript
+const { handleLogin } = useLogin({
+  googleConfig: {
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+  }
+})
+```
+
+**Deployment checklist:**
+- ✅ Environment variables configured in hosting platform (Render, Vercel, etc.)
+- ✅ `googleConfig` passed to `AuthProvider` from app code  
+- ✅ Variables on single line (no line breaks)
+- ✅ Clear build cache after env var changes
 
 ---
 

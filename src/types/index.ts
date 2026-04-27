@@ -30,6 +30,33 @@ export type TrackErrorFn = (error: unknown, meta: Record<string, unknown>) => vo
 
 export type TranslateFn = (key: string) => string
 
+// ─── Google OAuth config ─────────────────────────────────────────────────────
+
+/**
+ * Google OAuth configuration.
+ * 
+ * ⚠️ IMPORTANT: Pass these values from your app code, NOT from library defaults.
+ * In production builds, process.env variables are only replaced in your app code,
+ * not inside node_modules.
+ */
+export interface GoogleAuthConfig {
+  /**
+   * Google OAuth web client ID (required for Firebase Auth on all platforms).
+   * Get this from Google Cloud Console → APIs & Services → Credentials.
+   */
+  webClientId?: string
+  /**
+   * Android OAuth client ID (required for native Android builds).
+   * Only needed for standalone APK builds, not for Expo Go or web.
+   */
+  androidClientId?: string
+  /**
+   * iOS OAuth client ID (required for native iOS builds).
+   * Only needed for standalone iOS builds, not for Expo Go or web.
+   */
+  iosClientId?: string
+}
+
 // ─── Post-auth lifecycle callbacks ───────────────────────────────────────────
 
 /**
@@ -56,6 +83,22 @@ export type OnDeleteAccountFn = (userId: string) => Promise<void>
 export interface AuthProviderConfig {
   /** Firebase project configuration. */
   firebaseConfig: FirebaseConfig
+
+  /**
+   * Google OAuth configuration.
+   * 
+   * ⚠️ BEST PRACTICE: Pass these explicitly from your app code:
+   * ```typescript
+   * googleConfig: {
+   *   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+   *   androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+   *   iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+   * }
+   * ```
+   * 
+   * This ensures environment variables are replaced during build time.
+   */
+  googleConfig?: GoogleAuthConfig
 
   /**
    * AsyncStorage key used to persist session metadata.
@@ -117,6 +160,8 @@ export interface AuthContextType {
   showInfo: ShowInfoFn
   /** Injected error tracker (or no-op). */
   trackError: TrackErrorFn
+  /** Google OAuth configuration (if provided via AuthProvider config). */
+  googleConfig?: GoogleAuthConfig
 }
 
 // ─── Stored session ───────────────────────────────────────────────────────────

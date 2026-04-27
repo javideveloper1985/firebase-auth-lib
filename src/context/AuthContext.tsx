@@ -61,6 +61,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ config, children }) => {
   const {
     firebaseConfig,
+    googleConfig,
     sessionKey = DEFAULT_SESSION_KEY,
     inactivityLimitDays = DEFAULT_INACTIVITY_DAYS,
     translate: translateProp,
@@ -486,6 +487,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ config, children }) 
     showError,
     showInfo,
     trackError,
+    googleConfig,
   }
 
   return (

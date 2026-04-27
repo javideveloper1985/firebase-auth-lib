@@ -43,17 +43,47 @@ const getDefaultScheme = (): string | string[] | undefined =>
   Constants.expoConfig?.scheme
 
 export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult => {
-  const { loginWithGoogle, translate, showError, trackError } = useAuth()
+  const { loginWithGoogle, translate, showError, trackError, googleConfig: contextGoogleConfig } = useAuth()
 
+  // Merge configurations: context config > hook param > env vars
   const webClientId =
-    config?.webClientId ?? process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? ''
+    config?.webClientId ?? 
+    contextGoogleConfig?.webClientId ?? 
+    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? 
+    ''
   const androidClientId =
-    config?.androidClientId ?? process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? ''
+    config?.androidClientId ?? 
+    contextGoogleConfig?.androidClientId ?? 
+    process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? 
+    ''
   const iosClientId =
-    config?.iosClientId ?? process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? ''
+    config?.iosClientId ?? 
+    contextGoogleConfig?.iosClientId ?? 
+    process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? 
+    ''
 
   const isExpoGo = Constants.appOwnership === 'expo'
   const isWeb = Platform.OS === 'web'
+
+  // ⚠️ Warn if credentials are missing (common in production builds)
+  useEffect(() => {
+    if (!webClientId) {
+      console.warn(
+        '[expo-firebase-auth] Google Auth configuration missing!\n' +
+        'webClientId is required. Configure it in AuthProvider:\n\n' +
+        '<AuthProvider config={{\n' +
+        '  firebaseConfig: {...},\n' +
+        '  googleConfig: {\n' +
+        '    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,\n' +
+        '    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,\n' +
+        '    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,\n' +
+        '  }\n' +
+        '}}>\n\n' +
+        '⚠️  NOTE: process.env is NOT replaced in node_modules during builds.\n' +
+        'Pass these values from your app code.'
+      )
+    }
+  }, [webClientId])
 
   const effectiveAndroidClientId = isExpoGo ? undefined : androidClientId
   const effectiveIosClientId = isExpoGo ? undefined : iosClientId
@@ -148,24 +178,9 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
   }, [response, loginWithGoogle, showError, translate])
 
   const handleLoginGoogle = async (): Promise<void> => {
-    // DEBUG: Log validation info (safe - no full credentials)
-    console.log('🔍 useGoogleAuth.handleLoginGoogle - START');
-    console.log('🔍 Config check:', {
-      hasWebClientId: !!webClientId,
-      webClientIdStart: webClientId?.substring(0, 10) || '(empty)',
-      hasAndroidClientId: !!androidClientId,
-      androidClientIdStart: androidClientId?.substring(0, 10) || '(empty)',
-      hasIosClientId: !!iosClientId,
-      iosClientIdStart: iosClientId?.substring(0, 10) || '(empty)',
-      platform: Platform.OS,
-      isExpoGo,
-      redirectScheme,
-      owner,
-      slug
-    });
-    
+    // Validación de configuración (sin exponer credenciales)
     if (!redirectScheme) {
-      console.error('❌ Validation failed: redirectScheme is missing');
+      console.error('[expo-firebase-auth] Missing redirectScheme for Google Auth')
       showError(
         translate('auth.googleConfigIncompleteTitle'),
         translate('auth.googleConfigMissingRedirect'),
@@ -174,7 +189,7 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
     }
 
     if (isExpoGo && (!owner || !slug)) {
-      console.error('❌ Validation failed: owner or slug missing in Expo Go');
+      console.error('[expo-firebase-auth] Missing owner/slug in Expo Go')
       showError(
         translate('auth.googleConfigIncompleteTitle'),
         translate('auth.googleConfigMissingOwnerSlug'),
@@ -182,14 +197,9 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
       return
     }
 
-    // Validación específica por plataforma
     // Web Client ID siempre es requerido (para Firebase Auth)
     if (!webClientId) {
-      console.error('❌ Web Client ID is required for Google Auth', {
-        webClientId: webClientId || '(empty)',
-        platform: Platform.OS,
-        isExpoGo
-      })
+      console.error('[expo-firebase-auth] Missing webClientId - required for Google Auth')
       showError(
         translate('auth.googleConfigIncompleteTitle'),
         translate('auth.googleConfigMissingWebClientId'),
@@ -202,18 +212,10 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
     
     if (Platform.OS === 'android' && !isExpoGo && !androidClientId) {
       missingNativeClientError = 'auth.googleConfigMissingAndroidClientId'
-      console.error('❌ Android Client ID is required for native Android', {
-        androidClientId: androidClientId || '(empty)',
-        platform: Platform.OS,
-        isExpoGo
-      })
+      console.error('[expo-firebase-auth] Missing androidClientId for native Android')
     } else if (Platform.OS === 'ios' && !isExpoGo && !iosClientId) {
       missingNativeClientError = 'auth.googleConfigMissingIosClientId'
-      console.error('❌ iOS Client ID is required for native iOS', {
-        iosClientId: iosClientId || '(empty)',
-        platform: Platform.OS,
-        isExpoGo
-      })
+      console.error('[expo-firebase-auth] Missing iosClientId for native iOS')
     }
     
     if (missingNativeClientError) {
@@ -223,8 +225,6 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
       )
       return
     }
-    
-    console.log('✅ All validations passed, calling promptAsync...');
 
     try {
       if (isExpoGo && googleRequest && proxyRedirectUri) {

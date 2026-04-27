@@ -57,6 +57,7 @@ export type {
   AuthContextType,
   AuthProviderConfig,
   FirebaseConfig,
+  GoogleAuthConfig,
   ShowErrorFn,
   ShowInfoFn,
   TrackErrorFn,
