@@ -139,16 +139,21 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
   }, [response, loginWithGoogle, showError, translate])
 
   const handleLoginGoogle = async (): Promise<void> => {
-    // DEBUG: Log all variables before validation
+    // DEBUG: Log validation info (safe - no full credentials)
     console.log('🔍 useGoogleAuth.handleLoginGoogle - START');
-    console.log('🔍 webClientId:', webClientId);
-    console.log('🔍 androidClientId:', androidClientId);
-    console.log('🔍 iosClientId:', iosClientId);
-    console.log('🔍 Platform.OS:', Platform.OS);
-    console.log('🔍 isExpoGo:', isExpoGo);
-    console.log('🔍 redirectScheme:', redirectScheme);
-    console.log('🔍 owner:', owner);
-    console.log('🔍 slug:', slug);
+    console.log('🔍 Config check:', {
+      hasWebClientId: !!webClientId,
+      webClientIdStart: webClientId?.substring(0, 10) || '(empty)',
+      hasAndroidClientId: !!androidClientId,
+      androidClientIdStart: androidClientId?.substring(0, 10) || '(empty)',
+      hasIosClientId: !!iosClientId,
+      iosClientIdStart: iosClientId?.substring(0, 10) || '(empty)',
+      platform: Platform.OS,
+      isExpoGo,
+      redirectScheme,
+      owner,
+      slug
+    });
     
     if (!redirectScheme) {
       console.error('❌ Validation failed: redirectScheme is missing');
@@ -177,9 +182,9 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
       webClientIdEmpty: !webClientId,
       androidCheck: Platform.OS === 'android' && !isExpoGo && !androidClientId,
       iosCheck: Platform.OS === 'ios' && !isExpoGo && !iosClientId,
-      finalResult: missingConfig
-    });
-
+      fihasWebClientId: !!webClientId,
+        hasAndroidClientId: !!androidClientId,
+        hasIosClientId: !!iosClientId
     if (missingConfig) {
       console.error('❌ Validation failed: Client IDs missing', {
         webClientId: webClientId || '(empty)',
