@@ -79,8 +79,8 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
   const [googleRequest, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: webClientId,
     webClientId,
-    androidClientId: effectiveAndroidClientId,
-    iosClientId: effectiveIosClientId,
+    androidClientId: isWeb ? undefined : effectiveAndroidClientId,
+    iosClientId: isWeb ? undefined : effectiveIosClientId,
     responseType: isExpoGo ? AuthSession.ResponseType.Token : undefined,
     selectAccount: true,
     redirectUri,
@@ -158,8 +158,7 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
     const missingConfig =
       !webClientId ||
       (Platform.OS === 'android' && !isExpoGo && !androidClientId) ||
-      (Platform.OS === 'ios' && !iosClientId) ||
-      (Platform.OS === 'web' && !webClientId)
+      (Platform.OS === 'ios' && !isExpoGo && !iosClientId)
 
     if (missingConfig) {
       showError(
