@@ -39,6 +39,12 @@ export const defaultTranslations: Record<string, string> = {
     'Expo owner and slug are required when running in Expo Go.',
   'auth.googleConfigReview':
     'One or more Google client IDs are missing. Review your environment variables.',
+  'auth.googleConfigMissingWebClientId':
+    'Web Client ID is required for browser-based authentication.',
+  'auth.googleConfigMissingAndroidClientId':
+    'Android Client ID is required for native Android apps.',
+  'auth.googleConfigMissingIosClientId':
+    'iOS Client ID is required for native iOS apps.',
   'auth.googleValidateAccountError': 'Could not validate your Google account.',
   'auth.googleAuthIncomplete': 'Google authentication did not complete.',
 

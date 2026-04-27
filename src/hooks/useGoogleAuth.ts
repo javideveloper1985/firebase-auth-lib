@@ -10,11 +10,20 @@ import { useAuth } from '../context/AuthContext'
 WebBrowser.maybeCompleteAuthSession()
 
 export interface UseGoogleAuthConfig {
-  /** Google OAuth web client ID (required for all platforms). */
+  /** 
+   * Google OAuth web client ID (required for Firebase Auth on all platforms).
+   * Used for authenticating with Firebase Auth backend.
+   */
   webClientId?: string
-  /** Android OAuth client ID (ignored in Expo Go). */
+  /** 
+   * Android OAuth client ID (required for native Android builds, ignored in Expo Go/Web).
+   * Used to verify the app signature on native Android.
+   */
   androidClientId?: string
-  /** iOS OAuth client ID (ignored in Expo Go). */
+  /** 
+   * iOS OAuth client ID (required for native iOS builds, ignored in Expo Go/Web).
+   * Used to verify the app bundle ID on native iOS.
+   */
   iosClientId?: string
   /** Expo account owner (used for Expo Go proxy redirect). */
   owner?: string
@@ -173,30 +182,44 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
       return
     }
 
-    const missingConfig =
-      !webClientId ||
-      (Platform.OS === 'android' && !isExpoGo && !androidClientId) ||
-      (Platform.OS === 'ios' && !isExpoGo && !iosClientId)
-    
-    console.log('🔍 missingConfig evaluation:', {
-      webClientIdEmpty: !webClientId,
-      androidCheck: Platform.OS === 'android' && !isExpoGo && !androidClientId,
-      iosCheck: Platform.OS === 'ios' && !isExpoGo && !iosClientId,
-      fihasWebClientId: !!webClientId,
-        hasAndroidClientId: !!androidClientId,
-        hasIosClientId: !!iosClientId
-    })
-    
-    if (missingConfig) {
-      console.error('❌ Validation failed: Client IDs missing', {
+    // Validación específica por plataforma
+    // Web Client ID siempre es requerido (para Firebase Auth)
+    if (!webClientId) {
+      console.error('❌ Web Client ID is required for Google Auth', {
         webClientId: webClientId || '(empty)',
-        androidClientId: androidClientId || '(empty)',
-        iosClientId: iosClientId || '(empty)',
-        platform: Platform.OS
-      });
+        platform: Platform.OS,
+        isExpoGo
+      })
       showError(
         translate('auth.googleConfigIncompleteTitle'),
-        translate('auth.googleConfigReview'),
+        translate('auth.googleConfigMissingWebClientId'),
+      )
+      return
+    }
+    
+    // Para apps nativas (no Expo Go), también se requiere el client ID de la plataforma
+    let missingNativeClientError: string | null = null
+    
+    if (Platform.OS === 'android' && !isExpoGo && !androidClientId) {
+      missingNativeClientError = 'auth.googleConfigMissingAndroidClientId'
+      console.error('❌ Android Client ID is required for native Android', {
+        androidClientId: androidClientId || '(empty)',
+        platform: Platform.OS,
+        isExpoGo
+      })
+    } else if (Platform.OS === 'ios' && !isExpoGo && !iosClientId) {
+      missingNativeClientError = 'auth.googleConfigMissingIosClientId'
+      console.error('❌ iOS Client ID is required for native iOS', {
+        iosClientId: iosClientId || '(empty)',
+        platform: Platform.OS,
+        isExpoGo
+      })
+    }
+    
+    if (missingNativeClientError) {
+      showError(
+        translate('auth.googleConfigIncompleteTitle'),
+        translate(missingNativeClientError),
       )
       return
     }
