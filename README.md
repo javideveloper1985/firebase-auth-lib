@@ -34,6 +34,7 @@ A production-ready Firebase authentication library for Expo / React Native appli
 - [Complete Code Examples](#-complete-code-examples)
 - [API Reference](#-api-reference)
 - [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
 - [Migration Guide](#-migration-guide)
 - [License](#-license)
 
@@ -1253,7 +1254,26 @@ await login(email, password);
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please open an issue or PR on GitHub.
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on:
+
+- 🚀 **Version Management** - Automated scripts for bumping versions
+- 📝 **Development Workflow** - How to set up and make changes
+- 📚 **Code Conventions** - Commit messages and coding standards
+- 🤝 **Pull Request Process** - Guidelines for submitting PRs
+
+Quick start for version bumps:
+```bash
+# Increment patch version (1.0.7 -> 1.0.8)
+npm run version:patch
+
+# Increment minor version (1.0.7 -> 1.1.0)  
+npm run version:minor
+
+# Increment major version (1.0.7 -> 2.0.0)
+npm run version:major
+```
+
+For issues or feature requests, please [open an issue on GitHub](https://github.com/javideveloper1985/firebase-auth-lib/issues).
 
 ---
 
