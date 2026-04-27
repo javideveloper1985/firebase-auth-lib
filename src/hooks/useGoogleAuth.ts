@@ -185,6 +185,8 @@ export const useGoogleAuth = (config?: UseGoogleAuthConfig): UseGoogleAuthResult
       fihasWebClientId: !!webClientId,
         hasAndroidClientId: !!androidClientId,
         hasIosClientId: !!iosClientId
+    })
+    
     if (missingConfig) {
       console.error('❌ Validation failed: Client IDs missing', {
         webClientId: webClientId || '(empty)',
