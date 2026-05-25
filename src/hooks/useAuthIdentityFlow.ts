@@ -10,7 +10,6 @@ import {
 } from '../services/authFormStorage'
 
 const EMPTY_FORM_VALUES = { name: '', email: '', password: '' }
-const DEV_DUMMY_VALUES = { name: 'Demo User', email: 'demo@example.com', password: '12345678' }
 
 export interface AuthIdentityFormData {
   name?: string
@@ -42,7 +41,7 @@ export const useAuthIdentityFlow = (): UseAuthIdentityFlowResult => {
       resolver,
       mode: 'onChange',
       reValidateMode: 'onChange',
-      defaultValues: __DEV__ ? DEV_DUMMY_VALUES : EMPTY_FORM_VALUES,
+      defaultValues: EMPTY_FORM_VALUES,
     })
 
   // Restore last-used identity on mount
@@ -50,7 +49,7 @@ export const useAuthIdentityFlow = (): UseAuthIdentityFlowResult => {
     const restore = async () => {
       const saved = await loadLastAuthFormIdentity()
       if (!saved) {
-        reset(__DEV__ ? DEV_DUMMY_VALUES : EMPTY_FORM_VALUES)
+        reset(EMPTY_FORM_VALUES)
         return
       }
       reset({ name: saved.name, email: saved.email, password: '' })
